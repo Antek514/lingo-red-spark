@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { UserStats } from "@/components/UserStats";
 import { LearningLanguageSelector } from "@/components/LearningLanguageSelector";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Lock } from "lucide-react";
+import { Lock, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 // Define types for our lessons
@@ -40,12 +40,12 @@ interface Lesson {
 
 export default function Learn() {
   const { t, learningLanguage } = useLanguage();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, updateStreak } = useAuth();
   const navigate = useNavigate();
   const [lessons, setLessons] = useState<Lesson[]>([]);
   
   // Fetch lessons and user progress using React Query
-  const { data: lessonsData, isLoading } = useQuery({
+  const { data: lessonsData, isLoading, refetch } = useQuery({
     queryKey: ['lessons', user?.id, learningLanguage],
     queryFn: async () => {
       if (!user) throw new Error("User not authenticated");
@@ -94,6 +94,13 @@ export default function Learn() {
     }
   }, [lessonsData]);
   
+  // Update streak when visiting the learn page
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      updateStreak();
+    }
+  }, [isAuthenticated, user, updateStreak]);
+  
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!isAuthenticated && !isLoading) {
@@ -106,7 +113,7 @@ export default function Learn() {
     if (!user) return;
     
     if (lesson.status === 'locked') {
-      toast.error(t("learn.lessonLocked"));
+      toast.error("This lesson is currently locked. Complete the previous lessons first to unlock it.");
       return;
     }
     
@@ -142,14 +149,17 @@ export default function Learn() {
       
     } catch (error) {
       console.error("Error starting lesson:", error);
-      toast.error(t("errors.generic"));
+      toast.error("Something went wrong. Please try again.");
     }
   };
   
   if (isLoading) {
     return (
       <div className="container max-w-5xl py-6 space-y-8 flex justify-center items-center min-h-[50vh]">
-        <p>Loading lessons...</p>
+        <div className="flex flex-col items-center">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+          <p>Loading your lessons...</p>
+        </div>
       </div>
     );
   }
@@ -166,7 +176,7 @@ export default function Learn() {
     <div className="container max-w-5xl py-6 space-y-8">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">
-          {t("nav.learn")}
+          Your Learning Path
         </h1>
         <LearningLanguageSelector />
       </div>
@@ -181,7 +191,7 @@ export default function Learn() {
               {unitLessons.map((lesson) => (
                 <Card 
                   key={lesson.id} 
-                  className={`border-2 ${
+                  className={`border-2 transition-all duration-200 hover:shadow-md ${
                     lesson.status === 'completed' 
                       ? "border-lingo-green" 
                       : lesson.status === 'available' || lesson.status === 'in_progress' 
@@ -205,7 +215,7 @@ export default function Learn() {
                       {lesson.status !== 'locked' && (
                         <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
                           <div 
-                            className={`h-2.5 rounded-full ${
+                            className={`h-2.5 rounded-full transition-all ${
                               lesson.status === 'completed' ? 'bg-lingo-green' : 'bg-lingo-purple'
                             }`} 
                             style={{ width: `${lesson.progress}%` }}
@@ -216,12 +226,12 @@ export default function Learn() {
                   </CardContent>
                   <CardFooter>
                     <Button 
-                      className={`w-full ${
+                      className={`w-full transition ${
                         lesson.status === 'locked' 
                           ? "bg-gray-400" 
                           : lesson.status === 'completed' 
-                            ? "bg-lingo-green" 
-                            : "bg-lingo-purple"
+                            ? "bg-lingo-green hover:bg-lingo-green/90" 
+                            : "bg-lingo-purple hover:bg-lingo-purple/90"
                       }`}
                       onClick={() => handleLessonClick(lesson)}
                       disabled={lesson.status === 'locked'}
@@ -229,14 +239,14 @@ export default function Learn() {
                       {lesson.status === 'locked' ? (
                         <span className="flex items-center">
                           <Lock className="h-4 w-4 mr-2" />
-                          {t("learn.locked")}
+                          Lesson Locked
                         </span>
                       ) : lesson.status === 'completed' ? (
-                        t("learn.practiceSkill")
-                      ) : lesson.status === 'in_progress' ? (
-                        t("learn.continueLesson")
+                        "Practice Again"
+                      ) : lesson.progress > 0 ? (
+                        `Continue (${Math.round(lesson.progress)}%)`
                       ) : (
-                        t("learn.startLesson")
+                        "Start Lesson"
                       )}
                     </Button>
                   </CardFooter>
