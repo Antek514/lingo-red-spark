@@ -14,19 +14,10 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Learn from "./pages/Learn";
-import LessonPage from "./pages/LessonPage";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-      staleTime: 30000,
-    },
-  },
-});
+const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -35,7 +26,7 @@ const App = () => (
         <AuthProvider>
           <TooltipProvider>
             <Toaster />
-            <Sonner position="top-center" closeButton richColors />
+            <Sonner />
             <BrowserRouter>
               <div className="min-h-screen flex flex-col">
                 <NavBar />
@@ -45,7 +36,6 @@ const App = () => (
                     <Route path="/login" element={<Login />} />
                     <Route path="/signup" element={<Signup />} />
                     <Route path="/learn" element={<Learn />} />
-                    <Route path="/lesson/:lessonId" element={<LessonPage />} />
                     <Route path="/profile" element={<Profile />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
