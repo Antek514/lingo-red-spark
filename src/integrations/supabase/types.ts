@@ -9,7 +9,129 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      lessons: {
+        Row: {
+          created_at: string
+          description: string
+          icon: string
+          id: string
+          level: number
+          sequence_order: number
+          title: string
+          unit: number
+          xp: number
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          icon: string
+          id?: string
+          level: number
+          sequence_order: number
+          title: string
+          unit: number
+          xp: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          icon?: string
+          id?: string
+          level?: number
+          sequence_order?: number
+          title?: string
+          unit?: number
+          xp?: number
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          last_active_date: string | null
+          learning_language: string
+          level: number
+          streak: number
+          ui_language: string
+          updated_at: string
+          username: string | null
+          xp: number
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          last_active_date?: string | null
+          learning_language?: string
+          level?: number
+          streak?: number
+          ui_language?: string
+          updated_at?: string
+          username?: string | null
+          xp?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_active_date?: string | null
+          learning_language?: string
+          level?: number
+          streak?: number
+          ui_language?: string
+          updated_at?: string
+          username?: string | null
+          xp?: number
+        }
+        Relationships: []
+      }
+      user_lesson_progress: {
+        Row: {
+          completed_at: string | null
+          id: string
+          last_attempted_at: string | null
+          lesson_id: string
+          progress: number
+          started_at: string | null
+          status: Database["public"]["Enums"]["lesson_status"]
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          id?: string
+          last_attempted_at?: string | null
+          lesson_id: string
+          progress?: number
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["lesson_status"]
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          id?: string
+          last_attempted_at?: string | null
+          lesson_id?: string
+          progress?: number
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["lesson_status"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_lesson_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_lesson_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +140,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      lesson_status: "locked" | "available" | "in_progress" | "completed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +255,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      lesson_status: ["locked", "available", "in_progress", "completed"],
+    },
   },
 } as const

@@ -1,107 +1,179 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Provider } from "@supabase/supabase-js";
 
 // Types for user and authentication
 type User = {
   id: string;
-  username: string;
   email: string;
+  username?: string;
+  xp?: number;
+  level?: number;
+  streak?: number;
+  created_at?: string;
+};
+
+type Profile = {
+  id: string;
+  username: string | null;
   xp: number;
   level: number;
   streak: number;
-  createdAt: string;
+  learning_language: string;
+  ui_language: string;
+  last_active_date: string | null;
 };
 
 type AuthContextType = {
   user: User | null;
+  profile: Profile | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  signup: (username: string, email: string, password: string) => Promise<void>;
-  logout: () => void;
   isAuthenticated: boolean;
-};
-
-// Mock user data - in a real app, this would come from a database
-const MOCK_USER: User = {
-  id: "1",
-  username: "lingoLearner",
-  email: "user@example.com",
-  xp: 750,
-  level: 5,
-  streak: 3,
-  createdAt: new Date().toISOString(),
+  login: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
+  signup: (email: string, password: string, username: string) => Promise<void>;
+  logout: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Check if user is already logged in
+  // Fetch the user's profile
+  const fetchProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) throw error;
+
+      if (data) {
+        setProfile(data);
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
+
+  // Refresh the user's profile data
+  const refreshProfile = async () => {
+    if (!user?.id) return;
+    await fetchProfile(user.id);
+  };
+
+  // Check for auth state changes
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        // In a real app, this would verify the auth token with your backend
-        const savedUser = localStorage.getItem("lingoUser");
-        if (savedUser) {
-          setUser(JSON.parse(savedUser));
+    setIsLoading(true);
+
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        const currentUser = session?.user;
+        
+        setUser(currentUser ? {
+          id: currentUser.id,
+          email: currentUser.email || '',
+        } : null);
+        
+        if (currentUser) {
+          // Use setTimeout to avoid potential infinite loops
+          setTimeout(() => {
+            fetchProfile(currentUser.id);
+          }, 0);
+        } else {
+          setProfile(null);
         }
-      } catch (error) {
-        console.error("Authentication error:", error);
-        localStorage.removeItem("lingoUser");
-      } finally {
+        
         setIsLoading(false);
       }
-    };
+    );
 
-    checkAuth();
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const currentUser = session?.user;
+      
+      setUser(currentUser ? {
+        id: currentUser.id,
+        email: currentUser.email || '',
+      } : null);
+      
+      if (currentUser) {
+        fetchProfile(currentUser.id);
+      }
+      
+      setIsLoading(false);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Login function
   const login = async (email: string, password: string) => {
     setIsLoading(true);
-    
     try {
-      // In a real app, this would be an API call to your authentication endpoint
-      // For now, we'll simulate a successful login with mock data
-      await new Promise(resolve => setTimeout(resolve, 800)); // Simulate network delay
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
       
-      if (email !== "user@example.com" || password !== "password") {
-        throw new Error("Invalid credentials");
-      }
+      if (error) throw error;
       
-      setUser(MOCK_USER);
-      localStorage.setItem("lingoUser", JSON.stringify(MOCK_USER));
-    } catch (error) {
-      console.error("Login error:", error);
+      toast.success("Successfully logged in!");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to login");
       throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Signup function
-  const signup = async (username: string, email: string, password: string) => {
-    setIsLoading(true);
-    
+  // Login with Google
+  const loginWithGoogle = async () => {
     try {
-      // In a real app, this would register the user in your database
-      await new Promise(resolve => setTimeout(resolve, 800)); // Simulate network delay
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google' as Provider,
+        options: {
+          redirectTo: window.location.origin,
+        },
+      });
       
-      const newUser: User = {
-        ...MOCK_USER,
-        username,
+      if (error) throw error;
+    } catch (error: any) {
+      toast.error(error.message || "Failed to login with Google");
+      throw error;
+    }
+  };
+
+  // Signup function
+  const signup = async (email: string, password: string, username: string) => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signUp({
         email,
-        xp: 0,
-        level: 1,
-        streak: 0,
-      };
+        password,
+        options: {
+          data: {
+            name: username,
+          },
+        },
+      });
       
-      setUser(newUser);
-      localStorage.setItem("lingoUser", JSON.stringify(newUser));
-    } catch (error) {
-      console.error("Signup error:", error);
+      if (error) throw error;
+      
+      toast.success("Account created successfully!");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to create account");
       throw error;
     } finally {
       setIsLoading(false);
@@ -109,20 +181,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   // Logout function
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem("lingoUser");
+  const logout = async () => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      
+      toast.success("Successfully logged out");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to logout");
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <AuthContext.Provider 
-      value={{ 
-        user, 
-        isLoading, 
-        login, 
-        signup, 
+    <AuthContext.Provider
+      value={{
+        user,
+        profile,
+        isLoading,
+        isAuthenticated: !!user,
+        login,
+        loginWithGoogle,
+        signup,
         logout,
-        isAuthenticated: !!user
+        refreshProfile,
       }}
     >
       {children}
