@@ -3,7 +3,6 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Provider } from "@supabase/supabase-js";
-import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 
 // Types for user and authentication

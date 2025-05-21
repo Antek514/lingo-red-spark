@@ -72,6 +72,22 @@ const generateExercises = (lessonTitle: string): Exercise[] => {
     baseExercises[1].question = `Which means "I am hungry" in Spanish?`;
     baseExercises[1].options = ['Tengo sed', 'Tengo hambre', 'Quiero comer', 'Me gusta la comida'];
     baseExercises[1].correctAnswer = 'Tengo hambre';
+  } else if (lessonTitle.includes("Travel")) {
+    baseExercises[0].question = `How would you say "Airport" in Spanish?`;
+    baseExercises[0].options = ['Aeropuerto', 'Estación', 'Hotel', 'Playa'];
+    baseExercises[0].correctAnswer = 'Aeropuerto';
+    
+    baseExercises[1].question = `Which means "I need a taxi" in Spanish?`;
+    baseExercises[1].options = ['Necesito un taxi', 'Quiero un coche', 'Dónde está el bus', 'Vamos a caminar'];
+    baseExercises[1].correctAnswer = 'Necesito un taxi';
+  } else if (lessonTitle.includes("Family")) {
+    baseExercises[0].question = `How would you say "Brother" in Spanish?`;
+    baseExercises[0].options = ['Hermano', 'Padre', 'Tío', 'Primo'];
+    baseExercises[0].correctAnswer = 'Hermano';
+    
+    baseExercises[1].question = `Which means "My family is big" in Spanish?`;
+    baseExercises[1].options = ['Mi familia es grande', 'Tengo muchos hermanos', 'Mis padres son viejos', 'Mi casa es grande'];
+    baseExercises[1].correctAnswer = 'Mi familia es grande';
   }
   
   return baseExercises;
@@ -215,7 +231,7 @@ export default function LessonPage() {
             await supabase
               .from('profiles')
               .update({
-                xp: progress ? ((profile?.xp || 0) + lesson.xp) : (profile?.xp || 0) + lesson.xp,
+                xp: (profile?.xp || 0) + lesson.xp,
               })
               .eq('id', user.id);
           }
