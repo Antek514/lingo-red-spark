@@ -1,7 +1,10 @@
-import { useLocation } from "react-router-dom";
-import { useEffect } from "react";
 
-const NotFound = () => {
+import { useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+
+export default function NotFound() {
+  const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
@@ -12,16 +15,28 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">404</h1>
-        <p className="text-xl text-gray-600 mb-4">Oops! Page not found</p>
-        <a href="/" className="text-blue-500 hover:text-blue-700 underline">
-          Return to Home
-        </a>
+    <div className="flex flex-col items-center justify-center min-h-[80vh] text-center px-4">
+      <h1 className="text-9xl font-bold text-lingo-red">404</h1>
+      <div className="text-6xl font-bold mb-4">Oops!</div>
+      <p className="text-xl text-muted-foreground mb-8">
+        The page you're looking for doesn't exist or has been moved.
+      </p>
+      <div className="flex flex-wrap gap-4 justify-center">
+        <Button
+          size="lg"
+          onClick={() => navigate("/")}
+          className="bg-lingo-red hover:bg-lingo-red/90"
+        >
+          Go Home
+        </Button>
+        <Button
+          size="lg"
+          variant="outline"
+          onClick={() => navigate(-1)}
+        >
+          Go Back
+        </Button>
       </div>
     </div>
   );
-};
-
-export default NotFound;
+}
