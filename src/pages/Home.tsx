@@ -19,7 +19,7 @@ export default function Home() {
             Learn languages <span className="text-lingo-red">the fun way</span>
           </h1>
           <p className="text-xl text-muted-foreground">
-            Effective, engaging, and fun language learning with LingoRed. Start your language journey today!
+            Effective, engaging, and fun language learning with SnapGo. Start your language journey today!
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
             {isAuthenticated ? (
@@ -55,8 +55,8 @@ export default function Home() {
             <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-lingo-red via-lingo-purple to-lingo-blue opacity-70 blur-xl"></div>
             <div className="relative rounded-2xl overflow-hidden border-2 border-border">
               <img 
-                src="https://placehold.co/600x400/f0f0f0/cccccc?text=LingoRed+App+Preview" 
-                alt="LingoRed App" 
+                src="https://placehold.co/600x400/f0f0f0/cccccc?text=SnapGo+App+Preview" 
+                alt="SnapGo App" 
                 className="w-full aspect-video object-cover"
               />
             </div>
@@ -67,7 +67,7 @@ export default function Home() {
       {/* Features section */}
       <section className="py-12 md:py-20">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4">Why choose LingoRed?</h2>
+          <h2 className="text-3xl font-bold mb-4">Why choose SnapGo?</h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Our platform combines science-backed methods with fun gamification to help you learn languages faster.
           </p>
@@ -141,7 +141,7 @@ export default function Home() {
         <div className="bg-muted rounded-3xl p-8 md:p-12 text-center">
           <h2 className="text-3xl font-bold mb-4">Ready to start learning?</h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-            Choose a language and begin your learning journey with LingoRed today.
+            Choose a language and begin your learning journey with SnapGo today.
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
