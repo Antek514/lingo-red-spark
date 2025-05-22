@@ -17,7 +17,7 @@ import { Sun, Moon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Profile() {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, profile, isAuthenticated, logout } = useAuth();
   const { t } = useLanguage();
   const { theme } = useTheme();
   const { toast } = useToast();
@@ -29,9 +29,11 @@ export default function Profile() {
   useEffect(() => {
     if (user) {
       setEmail(user.email);
-      setUsername(user.username);
     }
-  }, [user]);
+    if (profile) {
+      setUsername(profile.username || "");
+    }
+  }, [user, profile]);
   
   useEffect(() => {
     if (!isAuthenticated) {
@@ -49,7 +51,7 @@ export default function Profile() {
     });
   };
   
-  if (!user) return null;
+  if (!user || !profile) return null;
 
   return (
     <div className="container max-w-4xl py-8">

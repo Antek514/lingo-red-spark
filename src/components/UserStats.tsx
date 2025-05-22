@@ -5,13 +5,13 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { Progress } from "@/components/ui/progress";
 
 export function UserStats() {
-  const { user } = useAuth();
+  const { profile } = useAuth();
   const { t } = useLanguage();
   
-  if (!user) return null;
+  if (!profile) return null;
   
   const xpToNextLevel = 1000; // In a real app, calculate this based on level
-  const xpProgress = (user.xp % 1000) / xpToNextLevel * 100;
+  const xpProgress = (profile.xp % 1000) / xpToNextLevel * 100;
   
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -21,7 +21,7 @@ export function UserStats() {
         </div>
         <div>
           <div className="text-sm font-medium text-muted-foreground">{t("learn.level")}</div>
-          <div className="text-2xl font-bold">{user.level}</div>
+          <div className="text-2xl font-bold">{profile.level}</div>
         </div>
       </div>
       
@@ -31,7 +31,7 @@ export function UserStats() {
         </div>
         <div>
           <div className="text-sm font-medium text-muted-foreground">{t("learn.streak")}</div>
-          <div className="text-2xl font-bold">{user.streak}</div>
+          <div className="text-2xl font-bold">{profile.streak}</div>
         </div>
       </div>
       
@@ -42,7 +42,7 @@ export function UserStats() {
         <div className="flex-1">
           <div className="text-sm font-medium text-muted-foreground">{t("learn.xp")}</div>
           <div className="flex items-center justify-between">
-            <div className="text-2xl font-bold">{user.xp}</div>
+            <div className="text-2xl font-bold">{profile.xp}</div>
             <div className="text-xs text-muted-foreground">/{xpToNextLevel}</div>
           </div>
           <Progress value={xpProgress} className="h-2 mt-1" />

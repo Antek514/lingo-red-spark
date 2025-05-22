@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,7 +27,7 @@ type LessonContentByLanguage = {
   }
 };
 
-// Sample lesson content for different languages
+// Comprehensive lesson content for different languages
 const lessonsContent: Record<string, LessonContentByLanguage> = {
   "basics-1": {
     spanish: {
@@ -100,6 +101,54 @@ const lessonsContent: Record<string, LessonContentByLanguage> = {
           correctAnswer: "Danke"
         }
       ]
+    },
+    italian: {
+      title: "Italian Basics 1",
+      description: "Learn essential Italian words and phrases",
+      questions: [
+        {
+          id: 1,
+          question: "How do you say 'hello' in Italian?",
+          options: ["Ciao", "Arrivederci", "Grazie", "Buongiorno"],
+          correctAnswer: "Ciao"
+        },
+        {
+          id: 2,
+          question: "What does 'Buona notte' mean?",
+          options: ["Good night", "Good morning", "Good afternoon", "Goodbye"],
+          correctAnswer: "Good night"
+        },
+        {
+          id: 3,
+          question: "How do you say 'thank you' in Italian?",
+          options: ["Grazie", "Per favore", "Prego", "Scusa"],
+          correctAnswer: "Grazie"
+        }
+      ]
+    },
+    japanese: {
+      title: "Japanese Basics 1",
+      description: "Learn essential Japanese words and phrases",
+      questions: [
+        {
+          id: 1,
+          question: "How do you say 'hello' in Japanese?",
+          options: ["こんにちは (Konnichiwa)", "さようなら (Sayōnara)", "ありがとう (Arigatō)", "お願いします (Onegaishimasu)"],
+          correctAnswer: "こんにちは (Konnichiwa)"
+        },
+        {
+          id: 2,
+          question: "What does 'おやすみなさい (Oyasuminasai)' mean?",
+          options: ["Good night", "Good morning", "Good afternoon", "Goodbye"],
+          correctAnswer: "Good night"
+        },
+        {
+          id: 3,
+          question: "How do you say 'thank you' in Japanese?",
+          options: ["ありがとう (Arigatō)", "お願いします (Onegaishimasu)", "どういたしまして (Dō itashimashite)", "すみません (Sumimasen)"],
+          correctAnswer: "ありがとう (Arigatō)"
+        }
+      ]
     }
   },
   "phrases": {
@@ -170,6 +219,54 @@ const lessonsContent: Record<string, LessonContentByLanguage> = {
         {
           id: 3,
           question: "What does 'Freut mich' mean?",
+          options: ["Nice to meet you", "See you later", "Have a good day", "How are you?"],
+          correctAnswer: "Nice to meet you"
+        }
+      ]
+    },
+    italian: {
+      title: "Italian Common Phrases",
+      description: "Learn everyday Italian expressions",
+      questions: [
+        {
+          id: 1,
+          question: "What does 'Come stai?' mean?",
+          options: ["How are you?", "What's your name?", "Where are you from?", "How old are you?"],
+          correctAnswer: "How are you?"
+        },
+        {
+          id: 2,
+          question: "How do you ask 'What's your name?' in Italian?",
+          options: ["Come ti chiami?", "Di dove sei?", "Quanti anni hai?", "Che ora è?"],
+          correctAnswer: "Come ti chiami?"
+        },
+        {
+          id: 3,
+          question: "What does 'Piacere di conoscerti' mean?",
+          options: ["Nice to meet you", "See you later", "Have a good day", "How are you?"],
+          correctAnswer: "Nice to meet you"
+        }
+      ]
+    },
+    japanese: {
+      title: "Japanese Common Phrases",
+      description: "Learn everyday Japanese expressions",
+      questions: [
+        {
+          id: 1,
+          question: "What does 'お元気ですか？ (O genki desu ka?)' mean?",
+          options: ["How are you?", "What's your name?", "Where are you from?", "How old are you?"],
+          correctAnswer: "How are you?"
+        },
+        {
+          id: 2,
+          question: "How do you ask 'What's your name?' in Japanese?",
+          options: ["お名前は何ですか？ (Onamae wa nan desu ka?)", "どこから来ましたか？ (Doko kara kimashita ka?)", "何歳ですか？ (Nan sai desu ka?)", "今何時ですか？ (Ima nanji desu ka?)"],
+          correctAnswer: "お名前は何ですか？ (Onamae wa nan desu ka?)"
+        },
+        {
+          id: 3,
+          question: "What does 'はじめまして (Hajimemashite)' mean?",
           options: ["Nice to meet you", "See you later", "Have a good day", "How are you?"],
           correctAnswer: "Nice to meet you"
         }
@@ -248,6 +345,54 @@ const lessonsContent: Record<string, LessonContentByLanguage> = {
           correctAnswer: "Egg"
         }
       ]
+    },
+    italian: {
+      title: "Italian Food Vocabulary",
+      description: "Learn Italian food and drink words",
+      questions: [
+        {
+          id: 1,
+          question: "What is 'mela' in English?",
+          options: ["Apple", "Banana", "Orange", "Strawberry"],
+          correctAnswer: "Apple"
+        },
+        {
+          id: 2,
+          question: "What is 'acqua' in English?",
+          options: ["Water", "Wine", "Beer", "Juice"],
+          correctAnswer: "Water"
+        },
+        {
+          id: 3,
+          question: "What does 'uovo' mean?",
+          options: ["Egg", "Cheese", "Bread", "Meat"],
+          correctAnswer: "Egg"
+        }
+      ]
+    },
+    japanese: {
+      title: "Japanese Food Vocabulary",
+      description: "Learn Japanese food and drink words",
+      questions: [
+        {
+          id: 1,
+          question: "What is 'りんご (ringo)' in English?",
+          options: ["Apple", "Banana", "Orange", "Strawberry"],
+          correctAnswer: "Apple"
+        },
+        {
+          id: 2,
+          question: "What is '水 (mizu)' in English?",
+          options: ["Water", "Wine", "Beer", "Juice"],
+          correctAnswer: "Water"
+        },
+        {
+          id: 3,
+          question: "What does '卵 (tamago)' mean?",
+          options: ["Egg", "Cheese", "Bread", "Meat"],
+          correctAnswer: "Egg"
+        }
+      ]
     }
   },
   "animals": {
@@ -318,6 +463,54 @@ const lessonsContent: Record<string, LessonContentByLanguage> = {
         {
           id: 3,
           question: "What does 'Pferd' mean?",
+          options: ["Horse", "Cow", "Sheep", "Pig"],
+          correctAnswer: "Horse"
+        }
+      ]
+    },
+    italian: {
+      title: "Italian Animal Names",
+      description: "Learn animal names in Italian",
+      questions: [
+        {
+          id: 1,
+          question: "What is 'cane' in English?",
+          options: ["Dog", "Cat", "Bird", "Fish"],
+          correctAnswer: "Dog"
+        },
+        {
+          id: 2,
+          question: "What is 'gatto' in English?",
+          options: ["Cat", "Dog", "Bird", "Mouse"],
+          correctAnswer: "Cat"
+        },
+        {
+          id: 3,
+          question: "What does 'cavallo' mean?",
+          options: ["Horse", "Cow", "Sheep", "Pig"],
+          correctAnswer: "Horse"
+        }
+      ]
+    },
+    japanese: {
+      title: "Japanese Animal Names",
+      description: "Learn animal names in Japanese",
+      questions: [
+        {
+          id: 1,
+          question: "What is '犬 (inu)' in English?",
+          options: ["Dog", "Cat", "Bird", "Fish"],
+          correctAnswer: "Dog"
+        },
+        {
+          id: 2,
+          question: "What is '猫 (neko)' in English?",
+          options: ["Cat", "Dog", "Bird", "Mouse"],
+          correctAnswer: "Cat"
+        },
+        {
+          id: 3,
+          question: "What does '馬 (uma)' mean?",
           options: ["Horse", "Cow", "Sheep", "Pig"],
           correctAnswer: "Horse"
         }
@@ -394,6 +587,54 @@ const lessonsContent: Record<string, LessonContentByLanguage> = {
           question: "What is 'she lives' in German?",
           options: ["Sie wohnt", "Ich wohne", "Du wohnst", "Wir wohnen"],
           correctAnswer: "Sie wohnt"
+        }
+      ]
+    },
+    italian: {
+      title: "Italian Present Tense",
+      description: "Learn basic Italian verb conjugations",
+      questions: [
+        {
+          id: 1,
+          question: "What is 'I speak' in Italian?",
+          options: ["Io parlo", "Tu parli", "Lui parla", "Noi parliamo"],
+          correctAnswer: "Io parlo"
+        },
+        {
+          id: 2,
+          question: "What is 'you eat' (informal singular) in Italian?",
+          options: ["Tu mangi", "Io mangio", "Lui mangia", "Noi mangiamo"],
+          correctAnswer: "Tu mangi"
+        },
+        {
+          id: 3,
+          question: "What is 'she lives' in Italian?",
+          options: ["Lei vive", "Io vivo", "Tu vivi", "Noi viviamo"],
+          correctAnswer: "Lei vive"
+        }
+      ]
+    },
+    japanese: {
+      title: "Japanese Basic Verbs",
+      description: "Learn basic Japanese verb forms",
+      questions: [
+        {
+          id: 1,
+          question: "What is 'I speak' in Japanese?",
+          options: ["私は話します (Watashi wa hanashimasu)", "あなたは話します (Anata wa hanashimasu)", "彼は話します (Kare wa hanashimasu)", "私たちは話します (Watashitachi wa hanashimasu)"],
+          correctAnswer: "私は話します (Watashi wa hanashimasu)"
+        },
+        {
+          id: 2,
+          question: "What is 'you eat' in Japanese?",
+          options: ["あなたは食べます (Anata wa tabemasu)", "私は食べます (Watashi wa tabemasu)", "彼は食べます (Kare wa tabemasu)", "私たちは食べます (Watashitachi wa tabemasu)"],
+          correctAnswer: "あなたは食べます (Anata wa tabemasu)"
+        },
+        {
+          id: 3,
+          question: "What is 'she lives' in Japanese?",
+          options: ["彼女は住んでいます (Kanojo wa sunde imasu)", "私は住んでいます (Watashi wa sunde imasu)", "あなたは住んでいます (Anata wa sunde imasu)", "私たちは住んでいます (Watashitachi wa sunde imasu)"],
+          correctAnswer: "彼女は住んでいます (Kanojo wa sunde imasu)"
         }
       ]
     }
@@ -586,6 +827,33 @@ export default function LessonDetail() {
               last_active_date: today
             })
             .eq('id', user.id);
+        }
+        
+        // Check for the next lesson to unlock
+        const { data: currentLessonData } = await supabase
+          .from('lessons')
+          .select('sequence_order')
+          .eq('id', lessonId)
+          .single();
+          
+        if (currentLessonData) {
+          // Find the next lesson in sequence
+          const { data: nextLessonData } = await supabase
+            .from('lessons')
+            .select('id')
+            .eq('sequence_order', currentLessonData.sequence_order + 1)
+            .single();
+            
+          // If next lesson exists, set its status to available
+          if (nextLessonData) {
+            await supabase
+              .from('user_lesson_progress')
+              .update({
+                status: 'available'
+              })
+              .eq('user_id', user.id)
+              .eq('lesson_id', nextLessonData.id);
+          }
         }
         
         // Show completion message

@@ -30,7 +30,7 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Cookie names
-const SESSION_COOKIE = "lingoRedSession";
+const SESSION_COOKIE = "snapGoSession";
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);

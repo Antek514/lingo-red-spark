@@ -80,8 +80,10 @@ export default function Learn() {
           const initialProgress = lessonsData.map((lesson, index) => ({
             user_id: user.id,
             lesson_id: lesson.id,
-            status: index === 0 ? 'available' : 'locked',
-            progress: 0
+            status: index === 0 ? 'available' as LessonStatus : 'locked' as LessonStatus,
+            progress: 0,
+            started_at: null,
+            completed_at: null
           }));
           
           await supabase.from('user_lesson_progress').insert(initialProgress);
@@ -161,7 +163,7 @@ export default function Learn() {
             <h2 className="text-2xl font-bold mb-4">Unit {unit}</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {unitLessons.map((lesson) => {
-                const userProgress = userProgressMap[lesson.id] || { status: 'locked', progress: 0 };
+                const userProgress = userProgressMap[lesson.id] || { status: 'locked', progress: 0, completed_at: null, started_at: null };
                 return (
                   <Card 
                     key={lesson.id} 

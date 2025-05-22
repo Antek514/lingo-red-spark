@@ -33,7 +33,7 @@ export function CookieConsent() {
         <CardContent className="pt-6">
           <h4 className="text-lg font-semibold mb-2">We use cookies</h4>
           <p className="text-sm text-muted-foreground">
-            We use cookies to improve your experience, provide key site features, 
+            We use cookies to improve your experience on SnapGo, provide key site features, 
             and track your progress in lessons. By continuing to use our website, 
             you agree to our use of cookies.
           </p>
