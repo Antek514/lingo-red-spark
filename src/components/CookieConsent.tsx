@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,6 +22,11 @@ export function CookieConsent() {
     setShowConsent(false);
   };
   
+  const handleLearnMore = () => {
+    // Keep the cookie dialog open but open the learn more page
+    window.open('/privacy-policy', '_blank');
+  };
+  
   if (!showConsent) {
     return null;
   }
@@ -41,7 +45,7 @@ export function CookieConsent() {
         <CardFooter className="flex gap-2 justify-end">
           <Button 
             variant="outline" 
-            onClick={handleAccept}
+            onClick={handleLearnMore}
           >
             Learn more
           </Button>

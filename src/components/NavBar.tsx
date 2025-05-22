@@ -45,11 +45,11 @@ export function NavBar() {
           <div className="flex items-center">
             <Link to="/" className="flex items-center">
               <div className="h-10 w-10 rounded-xl bg-lingo-red flex items-center justify-center mr-2">
-                <span className="text-white text-xl font-bold">L</span>
+                <span className="text-white text-xl font-bold">S</span>
               </div>
               <span className="text-xl font-bold">
-                <span className="text-lingo-red">Lingo</span>
-                <span>Red</span>
+                <span className="text-lingo-red">Snap</span>
+                <span>Go</span>
               </span>
             </Link>
           </div>

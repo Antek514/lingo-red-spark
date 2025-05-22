@@ -25,6 +25,7 @@ type AuthContextType = {
   signup: (username: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
+  refreshProfile: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -38,6 +39,41 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Fetch user profile from database
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      console.log("Fetching profile for user:", userId);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+        
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        throw error;
+      }
+      
+      if (data) {
+        console.log("Profile data received:", data);
+        setProfile(data as UserProfile);
+      } else {
+        console.log("No profile data found");
+        setProfile(null);
+      }
+    } catch (error) {
+      console.error('Error in fetchUserProfile:', error);
+      setProfile(null);
+    }
+  };
+
+  // Function to refresh profile data
+  const refreshProfile = async () => {
+    if (user) {
+      await fetchUserProfile(user.id);
+    }
+  };
+
   // Initialize auth state
   useEffect(() => {
     const initializeAuth = async () => {
@@ -46,6 +82,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Set up auth state listener
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
         (event, newSession) => {
+          console.log("Auth state changed:", event);
           setSession(newSession);
           setUser(newSession?.user ?? null);
           
@@ -91,26 +128,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     initializeAuth();
   }, []);
-  
-  // Fetch user profile from database
-  const fetchUserProfile = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-        
-      if (error) throw error;
-      
-      if (data) {
-        setProfile(data as UserProfile);
-      }
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
-      setProfile(null);
-    }
-  };
 
   // Login function
   const login = async (email: string, password: string) => {
@@ -180,7 +197,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         login, 
         signup, 
         logout,
-        isAuthenticated: !!user
+        isAuthenticated: !!user,
+        refreshProfile
       }}
     >
       {children}
