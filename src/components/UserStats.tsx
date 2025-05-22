@@ -8,7 +8,12 @@ export function UserStats() {
   const { profile } = useAuth();
   const { t } = useLanguage();
   
-  if (!profile) return null;
+  console.log("Profile in UserStats:", profile);
+  
+  if (!profile) {
+    console.log("No profile found in UserStats");
+    return null;
+  }
   
   const xpToNextLevel = 1000; // In a real app, calculate this based on level
   const xpProgress = (profile.xp % xpToNextLevel) / xpToNextLevel * 100;

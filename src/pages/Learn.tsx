@@ -35,12 +35,15 @@ interface UserLessonProgress {
 export default function Learn() {
   const { t, learningLanguage } = useLanguage();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { toast } = useToast();
   
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [userProgressMap, setUserProgressMap] = useState<Record<string, UserLessonProgress>>({});
   const [loading, setLoading] = useState(true);
+  
+  console.log("User in Learn:", user);
+  console.log("Profile in Learn:", profile);
   
   // Fetch lessons and user progress
   useEffect(() => {
@@ -52,13 +55,20 @@ export default function Learn() {
       
       setLoading(true);
       try {
+        console.log("Fetching lessons for user:", user.id);
+        
         // Fetch all lessons ordered by sequence
         const { data: lessonsData, error: lessonsError } = await supabase
           .from('lessons')
           .select('*')
           .order('sequence_order', { ascending: true });
           
-        if (lessonsError) throw lessonsError;
+        if (lessonsError) {
+          console.error("Lessons fetch error:", lessonsError);
+          throw lessonsError;
+        }
+        
+        console.log("Lessons data:", lessonsData);
         
         // Fetch user progress for lessons
         const { data: progressData, error: progressError } = await supabase
@@ -66,7 +76,12 @@ export default function Learn() {
           .select('*')
           .eq('user_id', user.id);
           
-        if (progressError) throw progressError;
+        if (progressError) {
+          console.error("Progress fetch error:", progressError);
+          throw progressError;
+        }
+        
+        console.log("Progress data:", progressData);
         
         // Convert progress data to map for easy access
         const progressMap: Record<string, UserLessonProgress> = {};
@@ -76,6 +91,8 @@ export default function Learn() {
         
         // If no progress records exist, create initial records
         if (progressData?.length === 0 && lessonsData?.length > 0) {
+          console.log("No progress records found, creating initial records");
+          
           // Set first lesson as available, all others as locked
           const initialProgress = lessonsData.map((lesson, index) => ({
             user_id: user.id,
@@ -140,7 +157,7 @@ export default function Learn() {
     return (
       <div className="container max-w-5xl py-6 space-y-8">
         <div className="flex items-center justify-center h-64">
-          <p className="text-lg">Loading lessons...</p>
+          <p className="text-lg">{t("learn.loading")}</p>
         </div>
       </div>
     );
@@ -158,73 +175,79 @@ export default function Learn() {
       <UserStats />
       
       <div className="space-y-8">
-        {Object.entries(lessonsByUnit).map(([unit, unitLessons]) => (
-          <div key={unit}>
-            <h2 className="text-2xl font-bold mb-4">Unit {unit}</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {unitLessons.map((lesson) => {
-                const userProgress = userProgressMap[lesson.id] || { status: 'locked', progress: 0, completed_at: null, started_at: null };
-                return (
-                  <Card 
-                    key={lesson.id} 
-                    className={`border-2 ${
-                      userProgress.status === 'completed' 
-                        ? "border-lingo-green" 
-                        : userProgress.status === 'available'
-                          ? "border-lingo-purple"
-                          : "border-gray-200"
-                    }`}
-                  >
-                    <CardHeader className="pb-2">
-                      <div className="flex justify-between items-center">
-                        <div className="text-4xl">{lesson.icon}</div>
-                        <div className="badge-level">Level {lesson.level}</div>
-                      </div>
-                      <CardTitle className="mt-2">{lesson.title}</CardTitle>
-                      <CardDescription>{lesson.description}</CardDescription>
-                    </CardHeader>
-                    <CardContent className="pb-2">
-                      <div className="badge-xp">+{lesson.xp} XP</div>
-                      {userProgress.progress > 0 && userProgress.progress < 100 && (
-                        <div className="mt-2">
-                          <div className="h-2 bg-gray-200 rounded-full">
-                            <div 
-                              className="h-full bg-lingo-purple rounded-full"
-                              style={{ width: `${userProgress.progress}%` }}
-                            />
-                          </div>
-                          <p className="text-xs text-right mt-1">{userProgress.progress}% complete</p>
+        {Object.entries(lessonsByUnit).length > 0 ? (
+          Object.entries(lessonsByUnit).map(([unit, unitLessons]) => (
+            <div key={unit}>
+              <h2 className="text-2xl font-bold mb-4">{t("learn.unit")} {unit}</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {unitLessons.map((lesson) => {
+                  const userProgress = userProgressMap[lesson.id] || { status: 'locked', progress: 0, completed_at: null, started_at: null };
+                  return (
+                    <Card 
+                      key={lesson.id} 
+                      className={`border-2 ${
+                        userProgress.status === 'completed' 
+                          ? "border-lingo-green" 
+                          : userProgress.status === 'available'
+                            ? "border-lingo-purple"
+                            : "border-gray-200"
+                      }`}
+                    >
+                      <CardHeader className="pb-2">
+                        <div className="flex justify-between items-center">
+                          <div className="text-4xl">{lesson.icon}</div>
+                          <div className="badge-level">{t("learn.level")} {lesson.level}</div>
                         </div>
-                      )}
-                    </CardContent>
-                    <CardFooter>
-                      <Button 
-                        className={`w-full ${
-                          userProgress.status === 'locked' 
-                            ? "bg-gray-400" 
+                        <CardTitle className="mt-2">{lesson.title}</CardTitle>
+                        <CardDescription>{lesson.description}</CardDescription>
+                      </CardHeader>
+                      <CardContent className="pb-2">
+                        <div className="badge-xp">+{lesson.xp} XP</div>
+                        {userProgress.progress > 0 && userProgress.progress < 100 && (
+                          <div className="mt-2">
+                            <div className="h-2 bg-gray-200 rounded-full">
+                              <div 
+                                className="h-full bg-lingo-purple rounded-full"
+                                style={{ width: `${userProgress.progress}%` }}
+                              />
+                            </div>
+                            <p className="text-xs text-right mt-1">{userProgress.progress}% {t("learn.complete")}</p>
+                          </div>
+                        )}
+                      </CardContent>
+                      <CardFooter>
+                        <Button 
+                          className={`w-full ${
+                            userProgress.status === 'locked' 
+                              ? "bg-gray-400" 
+                              : userProgress.status === 'completed'
+                                ? "bg-lingo-green"
+                                : "bg-lingo-purple"
+                          }`}
+                          onClick={() => handleLessonClick(lesson)}
+                          disabled={userProgress.status === 'locked'}
+                        >
+                          {userProgress.status === 'locked' 
+                            ? t("learn.locked") 
                             : userProgress.status === 'completed'
-                              ? "bg-lingo-green"
-                              : "bg-lingo-purple"
-                        }`}
-                        onClick={() => handleLessonClick(lesson)}
-                        disabled={userProgress.status === 'locked'}
-                      >
-                        {userProgress.status === 'locked' 
-                          ? t("learn.locked") 
-                          : userProgress.status === 'completed'
-                            ? t("learn.practiceSkill")
-                            : userProgress.progress > 0
-                              ? t("learn.continueLesson")
-                              : t("learn.startLesson")
-                        }
-                      </Button>
-                    </CardFooter>
-                  </Card>
-                );
-              })}
+                              ? t("learn.practiceSkill")
+                              : userProgress.progress > 0
+                                ? t("learn.continueLesson")
+                                : t("learn.startLesson")
+                          }
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  );
+                })}
+              </div>
             </div>
+          ))
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-lg text-muted-foreground">{t("learn.noLessons")}</p>
           </div>
-        ))}
+        )}
       </div>
     </div>
   );
