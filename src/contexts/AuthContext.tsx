@@ -1,80 +1,132 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { Session, User } from '@supabase/supabase-js';
+import Cookies from 'js-cookie';
 
 // Types for user and authentication
-type User = {
+type UserProfile = {
   id: string;
   username: string;
   email: string;
   xp: number;
   level: number;
   streak: number;
-  createdAt: string;
+  learning_language: string;
+  ui_language: string;
+  last_active_date: string;
 };
 
 type AuthContextType = {
   user: User | null;
+  profile: UserProfile | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (username: string, email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   isAuthenticated: boolean;
-};
-
-// Mock user data - in a real app, this would come from a database
-const MOCK_USER: User = {
-  id: "1",
-  username: "lingoLearner",
-  email: "user@example.com",
-  xp: 750,
-  level: 5,
-  streak: 3,
-  createdAt: new Date().toISOString(),
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Cookie names
+const SESSION_COOKIE = "lingoRedSession";
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check if user is already logged in
+  // Initialize auth state
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        // In a real app, this would verify the auth token with your backend
-        const savedUser = localStorage.getItem("lingoUser");
-        if (savedUser) {
-          setUser(JSON.parse(savedUser));
+    const initializeAuth = async () => {
+      setIsLoading(true);
+      
+      // Set up auth state listener
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        (event, newSession) => {
+          setSession(newSession);
+          setUser(newSession?.user ?? null);
+          
+          // Update cookie on auth change
+          if (newSession) {
+            Cookies.set(SESSION_COOKIE, "authenticated", { 
+              expires: 7,
+              secure: true,
+              sameSite: 'Strict'
+            });
+          } else {
+            Cookies.remove(SESSION_COOKIE);
+          }
+          
+          // Fetch user profile if logged in
+          if (newSession?.user) {
+            setTimeout(() => {
+              fetchUserProfile(newSession.user.id);
+            }, 0);
+          } else {
+            setProfile(null);
+          }
         }
-      } catch (error) {
-        console.error("Authentication error:", error);
-        localStorage.removeItem("lingoUser");
-      } finally {
-        setIsLoading(false);
+      );
+      
+      // Get initial session
+      const { data: { session: initialSession } } = await supabase.auth.getSession();
+      setSession(initialSession);
+      setUser(initialSession?.user ?? null);
+      
+      // Fetch user profile if there's an active session
+      if (initialSession?.user) {
+        await fetchUserProfile(initialSession.user.id);
       }
+      
+      setIsLoading(false);
+      
+      // Cleanup
+      return () => {
+        subscription.unsubscribe();
+      };
     };
-
-    checkAuth();
+    
+    initializeAuth();
   }, []);
+  
+  // Fetch user profile from database
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+        
+      if (error) throw error;
+      
+      if (data) {
+        setProfile(data as UserProfile);
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      setProfile(null);
+    }
+  };
 
   // Login function
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     
     try {
-      // In a real app, this would be an API call to your authentication endpoint
-      // For now, we'll simulate a successful login with mock data
-      await new Promise(resolve => setTimeout(resolve, 800)); // Simulate network delay
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
       
-      if (email !== "user@example.com" || password !== "password") {
-        throw new Error("Invalid credentials");
-      }
+      if (error) throw error;
       
-      setUser(MOCK_USER);
-      localStorage.setItem("lingoUser", JSON.stringify(MOCK_USER));
+      // Authentication state will be updated by the listener
     } catch (error) {
-      console.error("Login error:", error);
+      console.error('Login error:', error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -86,22 +138,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setIsLoading(true);
     
     try {
-      // In a real app, this would register the user in your database
-      await new Promise(resolve => setTimeout(resolve, 800)); // Simulate network delay
-      
-      const newUser: User = {
-        ...MOCK_USER,
-        username,
+      const { error, data } = await supabase.auth.signUp({
         email,
-        xp: 0,
-        level: 1,
-        streak: 0,
-      };
+        password,
+        options: {
+          data: {
+            name: username
+          }
+        }
+      });
       
-      setUser(newUser);
-      localStorage.setItem("lingoUser", JSON.stringify(newUser));
+      if (error) throw error;
+      
+      // Authentication state will be updated by the listener
+      // The handle_new_user database trigger will create the profile
     } catch (error) {
-      console.error("Signup error:", error);
+      console.error('Signup error:', error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -109,15 +161,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   // Logout function
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem("lingoUser");
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+      Cookies.remove(SESSION_COOKIE);
+      // Auth state listener will handle the rest
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   return (
     <AuthContext.Provider 
       value={{ 
         user, 
+        profile,
         isLoading, 
         login, 
         signup, 

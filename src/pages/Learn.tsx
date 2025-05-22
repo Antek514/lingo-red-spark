@@ -1,63 +1,148 @@
 
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { UserStats } from "@/components/UserStats";
 import { LearningLanguageSelector } from "@/components/LearningLanguageSelector";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
 
-// Mock lesson data - in a real app, this would come from an API based on the selected language
-const lessons = [
-  {
-    id: "basics-1",
-    title: "Basics 1",
-    description: "Learn the essentials",
-    level: 1,
-    xp: 10,
-    completed: true,
-    icon: "🏠"
-  },
-  {
-    id: "phrases",
-    title: "Common Phrases",
-    description: "Essential expressions",
-    level: 1,
-    xp: 15,
-    completed: true,
-    icon: "👋"
-  },
-  {
-    id: "food",
-    title: "Food",
-    description: "Learn food vocabulary",
-    level: 1,
-    xp: 20,
-    completed: false,
-    icon: "🍕"
-  },
-  {
-    id: "animals",
-    title: "Animals",
-    description: "Animal names and sounds",
-    level: 2,
-    xp: 20,
-    completed: false,
-    icon: "🐶"
-  },
-  {
-    id: "verbs",
-    title: "Present Tense",
-    description: "Basic verb conjugations",
-    level: 2,
-    xp: 25,
-    completed: false,
-    icon: "📝"
-  }
-];
+// Define types for lessons
+type LessonStatus = "locked" | "available" | "completed";
+
+interface Lesson {
+  id: string;
+  title: string;
+  description: string;
+  level: number;
+  xp: number;
+  unit: number;
+  icon: string;
+  sequence_order: number;
+}
+
+interface UserLessonProgress {
+  lesson_id: string;
+  status: LessonStatus;
+  progress: number;
+  completed_at: string | null;
+  started_at: string | null;
+}
 
 export default function Learn() {
   const { t, learningLanguage } = useLanguage();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  
+  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [userProgressMap, setUserProgressMap] = useState<Record<string, UserLessonProgress>>({});
+  const [loading, setLoading] = useState(true);
+  
+  // Fetch lessons and user progress
+  useEffect(() => {
+    const fetchLessons = async () => {
+      if (!user) {
+        navigate('/login');
+        return;
+      }
+      
+      setLoading(true);
+      try {
+        // Fetch all lessons ordered by sequence
+        const { data: lessonsData, error: lessonsError } = await supabase
+          .from('lessons')
+          .select('*')
+          .order('sequence_order', { ascending: true });
+          
+        if (lessonsError) throw lessonsError;
+        
+        // Fetch user progress for lessons
+        const { data: progressData, error: progressError } = await supabase
+          .from('user_lesson_progress')
+          .select('*')
+          .eq('user_id', user.id);
+          
+        if (progressError) throw progressError;
+        
+        // Convert progress data to map for easy access
+        const progressMap: Record<string, UserLessonProgress> = {};
+        progressData?.forEach((progress: UserLessonProgress) => {
+          progressMap[progress.lesson_id] = progress;
+        });
+        
+        // If no progress records exist, create initial records
+        if (progressData?.length === 0 && lessonsData?.length > 0) {
+          // Set first lesson as available, all others as locked
+          const initialProgress = lessonsData.map((lesson, index) => ({
+            user_id: user.id,
+            lesson_id: lesson.id,
+            status: index === 0 ? 'available' : 'locked',
+            progress: 0
+          }));
+          
+          await supabase.from('user_lesson_progress').insert(initialProgress);
+          
+          // Update progress map
+          initialProgress.forEach((progress) => {
+            progressMap[progress.lesson_id] = progress as UserLessonProgress;
+          });
+        }
+        
+        setLessons(lessonsData || []);
+        setUserProgressMap(progressMap);
+      } catch (error) {
+        console.error('Error fetching lessons:', error);
+        toast({
+          title: "Error",
+          description: "Could not load lessons data",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchLessons();
+  }, [user, navigate, toast]);
+  
+  // Handle clicking on a lesson
+  const handleLessonClick = (lesson: Lesson) => {
+    const progress = userProgressMap[lesson.id];
+    
+    if (!progress || progress.status === 'locked') {
+      toast({
+        title: "Lesson Locked",
+        description: "Complete previous lessons to unlock this one.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    navigate(`/lesson/${lesson.id}`);
+  };
+  
+  // Group lessons by unit
+  const lessonsByUnit = lessons.reduce<Record<number, Lesson[]>>((acc, lesson) => {
+    if (!acc[lesson.unit]) {
+      acc[lesson.unit] = [];
+    }
+    acc[lesson.unit].push(lesson);
+    return acc;
+  }, {});
+  
+  if (loading) {
+    return (
+      <div className="container max-w-5xl py-6 space-y-8">
+        <div className="flex items-center justify-center h-64">
+          <p className="text-lg">Loading lessons...</p>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="container max-w-5xl py-6 space-y-8">
@@ -71,63 +156,73 @@ export default function Learn() {
       <UserStats />
       
       <div className="space-y-8">
-        <div>
-          <h2 className="text-2xl font-bold mb-4">Unit 1</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {lessons.slice(0, 3).map((lesson) => (
-              <Card key={lesson.id} className={`border-2 ${lesson.completed ? "border-lingo-green" : ""}`}>
-                <CardHeader className="pb-2">
-                  <div className="flex justify-between items-center">
-                    <div className="text-4xl">{lesson.icon}</div>
-                    <div className="badge-level">Level {lesson.level}</div>
-                  </div>
-                  <CardTitle className="mt-2">{lesson.title}</CardTitle>
-                  <CardDescription>{lesson.description}</CardDescription>
-                </CardHeader>
-                <CardContent className="pb-2">
-                  <div className="badge-xp">+{lesson.xp} XP</div>
-                </CardContent>
-                <CardFooter>
-                  <Button 
-                    className={`w-full ${lesson.completed ? "bg-lingo-green" : "bg-lingo-purple"}`}
-                    onClick={() => navigate(`/lesson/${lesson.id}`)}
+        {Object.entries(lessonsByUnit).map(([unit, unitLessons]) => (
+          <div key={unit}>
+            <h2 className="text-2xl font-bold mb-4">Unit {unit}</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {unitLessons.map((lesson) => {
+                const userProgress = userProgressMap[lesson.id] || { status: 'locked', progress: 0 };
+                return (
+                  <Card 
+                    key={lesson.id} 
+                    className={`border-2 ${
+                      userProgress.status === 'completed' 
+                        ? "border-lingo-green" 
+                        : userProgress.status === 'available'
+                          ? "border-lingo-purple"
+                          : "border-gray-200"
+                    }`}
                   >
-                    {lesson.completed ? t("learn.practiceSkill") : t("learn.startLesson")}
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
+                    <CardHeader className="pb-2">
+                      <div className="flex justify-between items-center">
+                        <div className="text-4xl">{lesson.icon}</div>
+                        <div className="badge-level">Level {lesson.level}</div>
+                      </div>
+                      <CardTitle className="mt-2">{lesson.title}</CardTitle>
+                      <CardDescription>{lesson.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="pb-2">
+                      <div className="badge-xp">+{lesson.xp} XP</div>
+                      {userProgress.progress > 0 && userProgress.progress < 100 && (
+                        <div className="mt-2">
+                          <div className="h-2 bg-gray-200 rounded-full">
+                            <div 
+                              className="h-full bg-lingo-purple rounded-full"
+                              style={{ width: `${userProgress.progress}%` }}
+                            />
+                          </div>
+                          <p className="text-xs text-right mt-1">{userProgress.progress}% complete</p>
+                        </div>
+                      )}
+                    </CardContent>
+                    <CardFooter>
+                      <Button 
+                        className={`w-full ${
+                          userProgress.status === 'locked' 
+                            ? "bg-gray-400" 
+                            : userProgress.status === 'completed'
+                              ? "bg-lingo-green"
+                              : "bg-lingo-purple"
+                        }`}
+                        onClick={() => handleLessonClick(lesson)}
+                        disabled={userProgress.status === 'locked'}
+                      >
+                        {userProgress.status === 'locked' 
+                          ? t("learn.locked") 
+                          : userProgress.status === 'completed'
+                            ? t("learn.practiceSkill")
+                            : userProgress.progress > 0
+                              ? t("learn.continueLesson")
+                              : t("learn.startLesson")
+                        }
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                );
+              })}
+            </div>
           </div>
-        </div>
-        
-        <div>
-          <h2 className="text-2xl font-bold mb-4">Unit 2</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {lessons.slice(3, 5).map((lesson) => (
-              <Card key={lesson.id} className={`border-2 ${lesson.completed ? "border-lingo-green" : ""}`}>
-                <CardHeader className="pb-2">
-                  <div className="flex justify-between items-center">
-                    <div className="text-4xl">{lesson.icon}</div>
-                    <div className="badge-level">Level {lesson.level}</div>
-                  </div>
-                  <CardTitle className="mt-2">{lesson.title}</CardTitle>
-                  <CardDescription>{lesson.description}</CardDescription>
-                </CardHeader>
-                <CardContent className="pb-2">
-                  <div className="badge-xp">+{lesson.xp} XP</div>
-                </CardContent>
-                <CardFooter>
-                  <Button 
-                    className={`w-full ${lesson.completed ? "bg-lingo-green" : "bg-lingo-purple"}`}
-                    onClick={() => navigate(`/lesson/${lesson.id}`)}
-                  >
-                    {lesson.completed ? t("learn.practiceSkill") : t("learn.startLesson")}
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
-        </div>
+        ))}
       </div>
     </div>
   );

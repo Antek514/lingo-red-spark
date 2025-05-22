@@ -8,12 +8,14 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { NavBar } from "./components/NavBar";
+import { CookieConsent } from "./components/CookieConsent";
 
 // Pages
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Learn from "./pages/Learn";
+import LessonDetail from "./pages/LessonDetail";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
@@ -36,10 +38,12 @@ const App = () => (
                     <Route path="/login" element={<Login />} />
                     <Route path="/signup" element={<Signup />} />
                     <Route path="/learn" element={<Learn />} />
+                    <Route path="/lesson/:lessonId" element={<LessonDetail />} />
                     <Route path="/profile" element={<Profile />} />
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </main>
+                <CookieConsent />
               </div>
             </BrowserRouter>
           </TooltipProvider>
